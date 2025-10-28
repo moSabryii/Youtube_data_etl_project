@@ -45,7 +45,7 @@ def get_playlist_id():
         data = response.json()
 
         # Optional: Print the JSON data in a formatted way for debugging
-        # print(json.dumps(data, indent=4))
+        print(json.dumps(data, indent=4))
 
         # Navigate through the JSON structure to get the 'uploads' playlist ID
         channel_items = data["items"][0]
