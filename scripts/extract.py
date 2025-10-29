@@ -1,5 +1,6 @@
 import requests
 import json
+from datetime import date
 import os
 from dotenv import load_dotenv
 
@@ -201,6 +202,13 @@ def extract_video_data(video_ids):
         # Propagate any request-related exceptions upward
         raise e
 
+def save_to_json(extracted_data):
+    os.makedirs("./data", exist_ok=True)  # Create folder if not exists
+    path = f"./data/YT_data_{date.today()}.json"
+    print(f"Saving {len(extracted_data)} videos to {path} ...")
+    with open(path, "w", encoding="utf-8") as file:
+        json.dump(extracted_data, file, indent=4, ensure_ascii=False)
+    print("✅ File saved successfully!")
 
 if __name__ == "__main__":
     # Run the extraction workflow only if this script is executed directly
@@ -213,4 +221,6 @@ if __name__ == "__main__":
     video_ids = get_video_ids(playlistId)
 
     # Step 3: Extract and print detailed metadata for all retrieved videos
-    extracted_data = extract_video_data(video_ids)
+    video_data = extract_video_data(video_ids)
+    
+    save_to_json(video_data)
