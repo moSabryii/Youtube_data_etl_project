@@ -203,11 +203,28 @@ def extract_video_data(video_ids):
         raise e
 
 def save_to_json(extracted_data):
-    os.makedirs("./data", exist_ok=True)  # Create folder if not exists
+    """
+    Save the extracted video metadata to a JSON file.
+
+    The file will be named with the current date and stored inside a 'data' folder.
+    The folder is created automatically if it does not already exist.
+
+    Args:
+        extracted_data (list): List of dictionaries containing YouTube video data.
+    """
+    # Ensure the data folder exists to prevent file write errors
+    os.makedirs("./data", exist_ok=True)  
+    
+    # Define the file path with today's date
     path = f"./data/YT_data_{date.today()}.json"
+    
+    # Inform the user that saving is in progress
     print(f"Saving {len(extracted_data)} videos to {path} ...")
+    
+    # Write data to the JSON file with proper formatting and UTF-8 encoding
     with open(path, "w", encoding="utf-8") as file:
         json.dump(extracted_data, file, indent=4, ensure_ascii=False)
+    # Confirm successful file creation
     print("✅ File saved successfully!")
 
 if __name__ == "__main__":
