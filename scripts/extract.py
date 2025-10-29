@@ -128,10 +128,89 @@ def get_video_ids(playlistId):
         raise e
 
 
+def extract_video_data(video_ids):
+    """
+    Fetch detailed metadata for a list of video IDs from YouTube.
+
+    This function requests multiple video details in batches (up to 50 per call),
+    using the 'videos' endpoint. Each batch includes metadata such as title,
+    publish date, duration, view count, likes, and comments.
+
+    Args:
+        video_ids (list): A list of YouTube video IDs.
+
+    Returns:
+        list[dict]: A list of dictionaries containing extracted video metadata.
+
+    Raises:
+        requests.exceptions.RequestException: If there is an issue with the API request.
+    """
+
+    # Initialize a container for all extracted video data
+    extracted_data = []
+
+    # Helper function to yield successive chunks of video IDs (batch processing)
+    def batch_list(video_id_lst, batch_size):
+        for video_id in range(0, len(video_id_lst), batch_size):
+            yield video_id_lst[video_id : video_id + batch_size]
+
+    try:
+        # Process video IDs in manageable batches
+        for batch in batch_list(video_ids, max_result):
+            # Join list of IDs into a comma-separated string for the API request
+            video_ids_str = ",".join(batch)
+
+            # Construct API endpoint for retrieving detailed video data
+            url = (
+                f"https://youtube.googleapis.com/youtube/v3/videos?"
+                f"part=contentDetails&part=snippet&part=statistics&id={video_ids_str}&key={API_KEY}"
+            )
+
+            # Execute the GET request and validate response
+            response = requests.get(url)
+            response.raise_for_status()
+
+            # Decode the JSON response
+            data = response.json()
+
+            # Loop through each video in the response and extract structured fields
+            for item in data.get("items", []):
+                video_id = item["id"]
+                snippet = item["snippet"]
+                contentDetails = item["contentDetails"]
+                statistics = item["statistics"]
+
+                # Map relevant attributes into a clean structured dictionary
+                video_data = {
+                    "video_id": video_id,
+                    "title": snippet["title"],
+                    "publishedAt": snippet["publishedAt"],
+                    "duration": contentDetails["duration"],
+                    "viewCount": statistics.get("viewCount", None),
+                    "likeCount": statistics.get("likeCount", None),
+                    "commentCount": statistics.get("commentCount", None),
+                }
+
+                # Append the current video's metadata to the results list
+                extracted_data.append(video_data)
+
+        # Return the final list containing all videos' metadata
+        return extracted_data
+
+    except requests.exceptions.RequestException as e:
+        # Propagate any request-related exceptions upward
+        raise e
+
+
 if __name__ == "__main__":
     # Run the extraction workflow only if this script is executed directly
     # (prevents automatic execution when imported as a module in other scripts)
+
+    # Step 1: Get the channel's upload playlist ID
     playlistId = get_playlist_id()
 
-    # Fetch and store all video IDs for the retrieved playlist
+    # Step 2: Retrieve all video IDs from that playlist
     video_ids = get_video_ids(playlistId)
+
+    # Step 3: Extract and print detailed metadata for all retrieved videos
+    extracted_data = extract_video_data(video_ids)
