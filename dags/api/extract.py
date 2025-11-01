@@ -1,23 +1,20 @@
 import requests
 import json
 from datetime import date
+from airflow.decorators import task
+from airflow.models import Variable
 import os
-from dotenv import load_dotenv
-
-# Load environment variables from a .env file
-# This allows storing sensitive information like API keys securely
-load_dotenv(dotenv_path="./.env")
 
 # Retrieve the YouTube API key from environment variables
-API_KEY = os.getenv("API_KEY")
+API_KEY = Variable.get("API_KEY")
 
 # The YouTube channel handle for which we want to fetch the upload playlist ID
-CHANNEL_HANDLE = "MrBeast"
+CHANNEL_HANDLE = Variable.get("CHANNEL_HANDLE")
 
 # Maximum number of results to fetch per API request (YouTube API limit is 50)
 max_result = 50
 
-
+@task
 def get_playlist_id():
     """
     Fetch the 'uploads' playlist ID for a given YouTube channel handle.
@@ -65,7 +62,7 @@ def get_playlist_id():
         # If any request-related exception occurs, re-raise it for higher-level handling
         raise e
 
-
+@task
 def get_video_ids(playlistId):
     """
     Retrieve all video IDs from a given YouTube playlist.
@@ -128,7 +125,7 @@ def get_video_ids(playlistId):
         # Re-raise the exception to be handled by the caller or global error handler
         raise e
 
-
+@task
 def extract_video_data(video_ids):
     """
     Fetch detailed metadata for a list of video IDs from YouTube.
@@ -202,6 +199,7 @@ def extract_video_data(video_ids):
         # Propagate any request-related exceptions upward
         raise e
 
+@task
 def save_to_json(extracted_data):
     """
     Save the extracted video metadata to a JSON file.
